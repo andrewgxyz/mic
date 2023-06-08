@@ -1,0 +1,10 @@
+[package]
+name = "music-analytics"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+clap = { version = "4.2.7", features = ["derive"] }
+glob = "0.3.1"
+lofty = "0.13.0"
+metaflac = "0.2.5"
