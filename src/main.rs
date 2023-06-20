@@ -326,33 +326,33 @@ fn get_song_vec_data (arr: &mut Vec<SongData>, glob_pattern: String) -> Result<(
 
         let album_artist = get_tag(tag, &ItemKey::AlbumArtist);
         let album_title = get_tag(tag, &ItemKey::AlbumTitle);
-        let arranger = get_tag(tag, &ItemKey::Arranger).split('/').map(|s| s.to_string()).collect();
+        let arranger = get_tag(tag, &ItemKey::Arranger).split(',').map(|s| s.to_string()).collect();
         let catalog_number = get_tag(tag, &ItemKey::CatalogNumber);
         let comment = get_tag(tag, &ItemKey::Comment);
-        let composer = get_tag(tag, &ItemKey::Composer).split('/').map(|s| s.to_string()).collect();
-        let conductor = get_tag(tag, &ItemKey::Conductor).split('/').map(|s| s.to_string()).collect();
+        let composer = get_tag(tag, &ItemKey::Composer).split(',').map(|s| s.to_string()).collect();
+        let conductor = get_tag(tag, &ItemKey::Conductor).split(',').map(|s| s.to_string()).collect();
         let copyright_message = get_tag(tag, &ItemKey::CopyrightMessage);
         let description = get_tag(tag, &ItemKey::Description);
-        let director = get_tag(tag, &ItemKey::Director).split('/').map(|s| s.to_string()).collect();
-        let engineer = get_tag(tag, &ItemKey::Engineer).split('/').map(|s| s.to_string()).collect();
-        let genre: Vec<String> = get_tag(tag, &ItemKey::Genre).split('/').map(|s| s.to_string()).collect();
-        let involved_people = get_tag(tag, &ItemKey::InvolvedPeople).split('/').map(|s| s.to_string()).collect();
+        let director = get_tag(tag, &ItemKey::Director).split(',').map(|s| s.to_string()).collect();
+        let engineer = get_tag(tag, &ItemKey::Engineer).split(',').map(|s| s.to_string()).collect();
+        let genre: Vec<String> = get_tag(tag, &ItemKey::Genre).split(';').map(|s| s.to_string()).collect();
+        let involved_people = get_tag(tag, &ItemKey::InvolvedPeople).split(',').map(|s| s.to_string()).collect();
         let label = get_tag(tag, &ItemKey::Label);
         let language = get_tag(tag, &ItemKey::Language);
         let length = get_tag(tag, &ItemKey::Length);
         let license = get_tag(tag, &ItemKey::License);
-        let lyricist = get_tag(tag, &ItemKey::Lyricist).split('/').map(|s| s.to_string()).collect();
+        let lyricist = get_tag(tag, &ItemKey::Lyricist).split(',').map(|s| s.to_string()).collect();
         let lyrics = get_tag(tag, &ItemKey::Lyrics);
-        let mix_dj = get_tag(tag, &ItemKey::MixDj).split('/').map(|s| s.to_string()).collect();
-        let mix_engineer = get_tag(tag, &ItemKey::MixEngineer).split('/').map(|s| s.to_string()).collect();
-        let mood: Vec<String>= get_tag(tag, &ItemKey::Mood).split('/').map(|s| s.to_string()).collect();
+        let mix_dj = get_tag(tag, &ItemKey::MixDj).split(',').map(|s| s.to_string()).collect();
+        let mix_engineer = get_tag(tag, &ItemKey::MixEngineer).split(',').map(|s| s.to_string()).collect();
+        let mood: Vec<String>= get_tag(tag, &ItemKey::Mood).split(',').map(|s| s.to_string()).collect();
         let movement = get_tag(tag, &ItemKey::Movement);
         let movement_number = get_tag(tag, &ItemKey::MovementNumber);
         let movement_total = get_tag(tag, &ItemKey::MovementTotal);
-        let musician_credits = get_tag(tag, &ItemKey::MusicianCredits).split('/').map(|s| s.to_string()).collect();
+        let musician_credits = get_tag(tag, &ItemKey::MusicianCredits).split(',').map(|s| s.to_string()).collect();
         let parental_advisory = get_tag(tag, &ItemKey::ParentalAdvisory);
-        let performer = get_tag(tag, &ItemKey::Performer).split('/').map(|s| s.to_string()).collect();
-        let producer = get_tag(tag, &ItemKey::Producer).split('/').map(|s| s.to_string()).collect();
+        let performer = get_tag(tag, &ItemKey::Performer).split(',').map(|s| s.to_string()).collect();
+        let producer = get_tag(tag, &ItemKey::Producer).split(',').map(|s| s.to_string()).collect();
         let publisher = get_tag(tag, &ItemKey::Publisher);
         let recording_date = get_tag(tag, &ItemKey::RecordingDate);
         let remixer = get_tag(tag, &ItemKey::Remixer);
@@ -363,7 +363,7 @@ fn get_song_vec_data (arr: &mut Vec<SongData>, glob_pattern: String) -> Result<(
         let track_title = get_tag(tag, &ItemKey::TrackTitle);
         let track_total = get_tag(tag, &ItemKey::TrackTotal);
         let work = get_tag(tag, &ItemKey::Work);
-        let writer = get_tag(tag, &ItemKey::Writer).split('/').map(|s| s.to_string()).collect();
+        let writer = get_tag(tag, &ItemKey::Writer).split(',').map(|s| s.to_string()).collect();
 
         arr.push(SongData {
             _album_artist: album_artist,
@@ -415,7 +415,7 @@ fn get_song_vec_data (arr: &mut Vec<SongData>, glob_pattern: String) -> Result<(
 fn fix_tag () -> Result<(), Box<dyn Error>>  {
     let home = env::var_os("HOME").unwrap().into_string().unwrap();
 
-    let globs = glob_with(format!("{}/music/*/*/*[.flac,.mp3,.wav]", &home).as_str(), MatchOptions {
+    let globs = glob_with(format!("{}/files/music-mp3/*/*/*[.flac,.mp3,.wav]", &home).as_str(), MatchOptions {
         case_sensitive: false,
         require_literal_separator: false,
         require_literal_leading_dot: false,
@@ -445,45 +445,23 @@ fn fix_tag () -> Result<(), Box<dyn Error>>  {
             }
         };
 
-        // let mf_tag = metaflac::Tag::read_from_path(&filename)?;
+        let lyric_tag = "UNSYNCEDLYRICS".to_string();
+        let key = &ItemKey::Unknown(lyric_tag);
+        let lyrics = tag.get_string(key);
+
+        println!("{:#?}", lyrics);
+
 
         // let arranger = get_tag(tag, &ItemKey::Arranger).replace(", ", "/");
-        // let composer = get_tag(tag, &ItemKey::Composer).replace(", ", "/");
+        // let composer = get_tag(tag, &ItemKey::Composer)
+        //     .replace("\\", ",")
+        //     .replace(", ", ",")
+        //     .replace("&", ",");
         // let conductor = get_tag(tag, &ItemKey::Conductor).replace(", ", "/");
         // let director = get_tag(tag, &ItemKey::Director).replace(", ", "/");
         // let engineer = get_tag(tag, &ItemKey::Engineer).replace(", ", "/");
-        let genre = get_tag(tag, &ItemKey::Genre)
-            .replace(" Concious Hip Hop", "Conscious Hip Hop")
-            .replace(" Experimental Hip Hop", "Experimental Hip Hop")
-            .replace(" Space Age Pop", "Space Age Pop")
-            .replace("Abmient", "Ambient")
-            .replace("Arabic Folk Music", "Arabic Folk")
-            .replace("Art Punk Art Rock", "Art Punk/Art Rock")
-            .replace("Dowmtempo", "Downtempo")
-            .replace("Dance-Pop Blue-Eyed Soul", "Dance-Pop/Blue-Eyed Soul")
-            .replace("Eletro House", "Electro-House")
-            .replace("Eletro-Disco", "Electro-Disco")
-            .replace("Electro House", "Electro-House")
-            .replace("Electro Swing", "Electro-Swing")
-            .replace("Glictch", "Glitch")
-            .replace("Intrumental Hip Hop", "Instrumental Hip Hop")
-            .replace("Jazz Fushion", "Jazz Fusion")
-            .replace("Lo-Fi", "Lofi")
-            .replace("Neo Psychedelia", "Neo-Psychedelia")
-            .replace("Neo-Psychodelia", "Neo-Psychedelia")
-            .replace("Nu Metal", "Nu-Metal")
-            .replace("Nu Jazz", "Nu-Jazz")
-            .replace("Post Rock", "Post-Rock")
-            .replace("Post Punk", "Post-Punk")
-            .replace("Post Industrial", "Post-Industrial")
-            .replace("Progressive PoplArt Pop", "Progressive Pop/Art Pop")
-            .replace("Psychodelic Pop", "Psychedelic Pop")
-            .replace("Sunshice Pop", "Sunshine Pop")
-            .replace("Synphonic Metal", "Symphonic Metal")
-            .replace("Synth Pop", "Synthpop")
-            .replace("Synth-Pop", "Synthpop")
-            .replace("Synth Fuck", "Synth Punk")
-            .replace("Video Game Music", "Video Game");
+        // let genre = get_tag(tag, &ItemKey::Genre)
+        //     .replace(",", ";");
         // let involved_people = get_tag(tag, &ItemKey::InvolvedPeople).replace(", ", "/");
         // let lyricist = get_tag(tag, &ItemKey::Lyricist).replace(", ", "/");
         // let mix_dj = get_tag(tag, &ItemKey::MixDj).replace(", ", "/");
@@ -496,9 +474,9 @@ fn fix_tag () -> Result<(), Box<dyn Error>>  {
 
         // mf_tag.set_vorbis("")
 
-        tag.set_genre(genre);
-        tag.save_to_path(&filename).unwrap();
-        println!("Genres have been updated for: {}", filename);
+        // tag.set_genre(genre);
+        // tag.save_to_path(&filename).unwrap();
+        // println!("Composers have been updated for: {}", filename);
     }
 
     Ok(())

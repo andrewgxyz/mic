@@ -4,7 +4,7 @@
 
 ## Installation
 
-Some prerequisites, you need to install rust on your system and one external program that generates the collage image **ImageMagick**.
+Some prerequisites, be sure you have Rust installed on your system.
 
 ```bash
 git clone https://github.com/andrewgxyz/scat.git
@@ -12,9 +12,9 @@ cd scat
 cargo build --release && cp ./target/release/scat ~/.local/bin
 ```
 
-
 ## Usage 
 
+Coming soon.
 
 Also some **warnings**:
 
