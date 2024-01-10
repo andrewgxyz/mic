@@ -1,25 +1,23 @@
-# Scat - Music Analytics
+# mic - Music Information CLI
 
-`scat` (mostly a play on the vocal style and the word stat) is a program that runs though your music folder and get general information on your collection.
+mic is a general CLI tool interfacing with your local music collection.
 
 ## Installation
 
 Some prerequisites, be sure you have Rust installed on your system.
 
 ```bash
-git clone https://github.com/andrewgxyz/scat.git
-cd scat
-cargo build --release && cp ./target/release/scat ~/.local/bin
+git clone https://github.com/andrewgxyz/mic.git
+cd mic
+cargo build --release && cp ./target/release/mic ~/.local/bin
 ```
 
-## Usage 
+## Features
 
-Coming soon.
-
-Also some **warnings**:
-
-- I only accept the `<artist>/<album>/01-<title>.<extention>` for what the program ends up finding
-- Similarly the cover has to be named `cover.<extention>` and has to be placed with the respective album
-- The first run will be the longest to generate the collage depending on collection size, the next runs will be much quicker since I cache everything afterwards
-- This program will likely not work on Windows/MacOS, mostly been focusing on Linux development, might need to take some time on that
-
+- Count the number of albums, songs by filter categories
+- Analyze runtime information
+- Generate playlists by similar filters
+- wtpn - Generates a list of what albums in your collection released either today, this week of this month.
+- Tag Editor?
+- Album Collage?
+- 
