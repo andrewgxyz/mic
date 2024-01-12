@@ -22,6 +22,7 @@ mod commands;
 use crate::commands::count::*;
 use crate::commands::playlist::*;
 use crate::commands::time::*;
+use crate::commands::wtp::*;
 
 #[derive(Parser)]
 #[command(
@@ -45,6 +46,9 @@ enum Command {
 
     /// Gives Insight runtimes of an Album or Collection
     Time(TimeArgs),
+
+    /// What records to play based on release ranges
+    Wtp(WtpArgs),
 }
 
 
@@ -55,6 +59,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         Command::Count(args) => count_music(args)?,
         Command::Playlist(args) => generate_playlist(args)?,
         Command::Time(args) => times_of_music(args)?,
+        Command::Wtp(args) => wtpn(args)?,
     };
 
     Ok(())

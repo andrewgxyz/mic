@@ -5,14 +5,14 @@ use std::{
     io::{Write, Read}
 };
 
-use chrono::Datelike;
+use chrono::{Datelike, NaiveDate};
 use dirs;
 use glob::{glob_with, MatchOptions};
 use lofty::{Probe, TaggedFileExt, ItemKey, Tag, AudioFile};
 use serde::{Deserialize, Serialize};
 use serde_json::from_str;
 
-use super::date::parse_string_to_datetime;
+use super::date::{parse_string_to_datetime, parse_string_to_yearless_date, get_start_end_week_dates};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SongData {
@@ -69,6 +69,8 @@ pub struct SongDataFilter {
     pub artist: Option<String>,
     pub album: Option<String>,
     pub genre: Option<String>,
+    pub moods: Option<String>,
+    pub week: bool,
 }
 
 impl SongDataFilter {
@@ -84,6 +86,15 @@ impl SongDataFilter {
 
         let genre_match = match &self.genre {
             Some(genre) => song._genre.contains(genre),
+            None => true,
+        };
+
+        let mood_match = match &self.moods {
+            Some(moods) => {
+                let moods_list: Vec<String> = moods.split(',').map(|e| e.to_string()).collect();
+                println!("{:?}", moods_list);
+                song._mood.contains(moods)
+            },
             None => true,
         };
 
@@ -107,8 +118,23 @@ impl SongDataFilter {
             None => true,
         };
 
-        year_match && month_match 
-            && artist_match && album_match && genre_match 
+        let week_match = match &self.week {
+            true => {
+                let (sat, fri) = get_start_end_week_dates();
+                let (yearless_sat, yearless_fri) = (
+                    NaiveDate::from_ymd_opt(0, sat.month(), sat.day()).unwrap(),
+                    NaiveDate::from_ymd_opt(0, fri.month(), fri.day()).unwrap(),
+                );
+                let yearless_date = parse_string_to_yearless_date(&song.recording_date);
+                let datecheck = yearless_date.ge(&yearless_sat) && yearless_date.le(&yearless_fri);
+
+                datecheck
+            },
+            false => true
+        };
+
+        year_match && month_match && week_match
+            && artist_match && album_match && genre_match && mood_match
     }
 }
 
@@ -149,7 +175,6 @@ fn load_cache_file(cache_name: &str) -> Result<SongDataCache, Box<dyn Error>> {
                 .read(true)
                 .open(file_path)?;
             let reader = std::io::BufReader::new(cache_file);
-            println!("Cache has been loaded");
 
             let mut json_string = String::new();
             reader.take(u64::MAX as u64).read_to_string(&mut json_string)?;
