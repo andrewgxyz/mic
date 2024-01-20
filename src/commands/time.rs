@@ -1,5 +1,6 @@
-use std::{env, error::Error, cmp::{min, max}};
+use std::{error::Error, collections::HashMap};
 use clap::Args;
+use prettytable::{row, Table, format};
 
 use crate::utils::songs::{get_songs, SongDataFilter};
 
@@ -20,16 +21,13 @@ pub struct TimeArgs {
 }
 
 pub fn times_of_music (args: TimeArgs) -> Result<(), Box<dyn Error>> {
-    let mut songs = get_songs()?;
-    let mut total_song_length = 0;
-    let mut max_song = 0;
-    let mut min_song = 99999999;
-    let mut albums: Vec<String> = vec![];
-    let mut album_lengths: Vec<u64> = vec![];
-    let mut max_album = 0;
-    let mut min_album = 99999999;
-    let mut artists: Vec<String> = vec![];
-    let mut genres: Vec<String> = vec![];
+    let songs = get_songs()?;
+    let total_song_length;
+    let max_song;
+    let min_song;
+    let mut album_lengths: HashMap<String, u64> = HashMap::new();
+    let max_album;
+    let min_album;
 
     let filter: SongDataFilter = SongDataFilter {
         month: args.month,
@@ -40,49 +38,33 @@ pub fn times_of_music (args: TimeArgs) -> Result<(), Box<dyn Error>> {
     };
 
     let filtered_songs: Vec<_> = filter.filter(songs);
+    let track_times: Vec<u64> = filtered_songs.iter().map(|s| {
+        let length = album_lengths.entry(s._album_title.clone()).or_insert(0);
+        *length += s._track_length;
 
-    for song in filtered_songs.clone() {
-        total_song_length += song._track_length;
-        min_song = min(min_song, song._track_length);
-        max_song = max(max_song, song._track_length);
+        s._track_length
+    }).collect();
+    let hash_values = album_lengths.values().cloned();
 
-        song._genre.iter().for_each(|a| {
-            if !genres.contains(a) {
-                genres.push(a.to_string());
-            }
-        });
+    min_song = track_times.iter().min().unwrap();
+    max_song = track_times.iter().max().unwrap();
+    total_song_length = track_times.iter().sum();
 
-        if albums.contains(&song._album_title) {
-            let index = albums.iter().position(|e| e.eq(&song._album_title)).unwrap();
+    min_album = hash_values.clone().min().unwrap();
+    max_album = hash_values.clone().max().unwrap();
+    let mut table = Table::new();
+    table.set_format(*format::consts::FORMAT_NO_LINESEP);
+    table.add_row(row!["Name", "Times"]);
 
-            album_lengths[index] += song._track_length;
-        } else {
-            albums.push(song._album_title.to_string());
-            album_lengths.push(song._track_length);
-        }
+    table.add_row(row!["Shortest album", convert_sec_to_fmt_time(min_album)]);
+    table.add_row(row!["Avg album length", convert_sec_to_fmt_time(total_song_length / (hash_values.len() as u64))]);
+    table.add_row(row!["Longest album", convert_sec_to_fmt_time(max_album)]);
+    table.add_row(row!["Shortest song", convert_sec_to_fmt_time(*min_song)]);
+    table.add_row(row!["Avg song length", convert_sec_to_fmt_time(total_song_length / (filtered_songs.len() as u64))]);
+    table.add_row(row!["Longest song", convert_sec_to_fmt_time(*max_song)]);
+    table.add_row(row!["Total song length", convert_sec_to_fmt_time(total_song_length)]);
 
-        if !artists.contains(&song._track_artist) {
-            artists.push(song._track_artist.to_string());
-        }
-    }
-
-    for album in album_lengths.clone() {
-        max_album = max(album, max_album);
-        min_album = min(album, min_album);
-    }
-
-    println!("{0: <20} | {1: <10}", "Name", "Totals");
-    println!("{0: <20} | {1: <10}", "----------", "----------");
-    println!("{0: <20} | {1: <10}", "Num of Songs", filtered_songs.len().to_string());
-    println!("{0: <20} | {1: <10}", "Num of Albums", &albums.len().to_string());
-    println!("{0: <20} | {1: <10}", "Avergae Album Length", convert_sec_to_fmt_time(total_song_length / (albums.len() as u64)));
-    println!("{0: <20} | {1: <10}", "Longest album", convert_sec_to_fmt_time(max_album));
-    println!("{0: <20} | {1: <10}", "Shortest album", convert_sec_to_fmt_time(min_album));
-    println!("{0: <20} | {1: <10}", "Num of Genres", &genres.len().to_string());
-    println!("{0: <20} | {1: <10}", "Avg song length", convert_sec_to_fmt_time(total_song_length / (filtered_songs.len() as u64)));
-    println!("{0: <20} | {1: <10}", "Longest song", convert_sec_to_fmt_time(max_song));
-    println!("{0: <20} | {1: <10}", "Shortest song", convert_sec_to_fmt_time(min_song));
-    println!("{0: <20} | {1: <10}", "Total song length", convert_sec_to_fmt_time(total_song_length));
+    table.printstd();
 
     Ok(())
 }

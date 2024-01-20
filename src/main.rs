@@ -38,7 +38,7 @@ struct Cli {
 #[derive(Subcommand)]
 enum Command {
     /// Count number of songs by group
-    #[command(arg_required_else_help = true)]
+    #[command(arg_required_else_help = false)]
     Count(CountArgs),
 
     /// Generates a playlist based on certain filters

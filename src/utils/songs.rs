@@ -12,7 +12,11 @@ use lofty::{Probe, TaggedFileExt, ItemKey, Tag, AudioFile};
 use serde::{Deserialize, Serialize};
 use serde_json::from_str;
 
-use super::date::{parse_string_to_datetime, parse_string_to_yearless_date, get_start_end_week_dates};
+use super::date::{
+    parse_string_to_datetime, 
+    parse_string_to_yearless_date, 
+    get_start_end_week_dates
+};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SongData {
@@ -30,7 +34,9 @@ pub struct SongData {
     pub _track_number: String,
     pub _track_title: String,
     pub _track_total: String,
+    pub filename: String,
     pub recording_date: String,
+
     // Details and Comments
     pub _comment: String,
     pub _copyright_message: String,
@@ -38,6 +44,7 @@ pub struct SongData {
     pub _label: String,
     pub _license: String,
     pub _parental_advisory: String,
+
     // Production Credits
     pub _arranger: Vec<String>,
     pub _composer: Vec<String>,
@@ -48,7 +55,7 @@ pub struct SongData {
     pub _language: String,
     pub _length: String,
     pub _lyricist: Vec<String>,
-    pub _lyrics: String,
+    pub _lyrics: Vec<String>,
     pub _mix_dj: Vec<String>,
     pub _mix_engineer: Vec<String>,
     pub _musician_credits: String,
@@ -59,17 +66,20 @@ pub struct SongData {
     pub _script: String,
     pub _work: String,
     pub _writer: Vec<String>,
-    pub filename: String
 }
 
 #[derive(Default)]
 pub struct SongDataFilter {
+    pub day: Option<u32>,
     pub month: Option<u32>,
     pub year: Option<i32>,
     pub artist: Option<String>,
     pub album: Option<String>,
     pub genre: Option<String>,
     pub moods: Option<String>,
+    pub words: Option<String>,
+    pub decade: Option<u16>,
+    pub track: Option<String>,
     pub week: bool,
 }
 
@@ -82,59 +92,70 @@ impl SongDataFilter {
     }
 
     pub fn matches(&self, song: &SongData) -> bool {
-        let dt = parse_string_to_datetime(&song.recording_date).expect("Something went wrong with date parsing");
+        let dt = parse_string_to_datetime(&song.recording_date)
+            .expect("Something went wrong with date parsing");
 
-        let genre_match = match &self.genre {
-            Some(genre) => song._genre.contains(genre),
-            None => true,
-        };
+        let mut matches: Vec<bool> = vec![];
 
-        let mood_match = match &self.moods {
-            Some(moods) => {
-                let moods_list: Vec<String> = moods.split(',').map(|e| e.to_string()).collect();
-                println!("{:?}", moods_list);
-                song._mood.contains(moods)
-            },
-            None => true,
-        };
+        // Matching Moods
+        matches.push(self.moods.as_ref().map_or(true, |moods| {
+            moods.split(',').map(|m| m.to_string()).any(|mood| song._mood.contains(&mood))
+        }));
 
-        let year_match = match self.year {
-            Some(year) => dt.year() == year,
-            None => true,
-        };
+        // Matching Genres
+        matches.push(self.genre.as_ref().map_or(true, |genres| {
+            genres.split(',').map(|m| m.to_string()).any(|genre| song._genre.contains(&genre))
+        }));
 
-        let month_match = match self.month {
-            Some(month) => dt.month() == month,
-            None => true,
-        };
+        // Matching Genres
+        matches.push(self.words.as_ref().map_or(true, |words| {
+            words.split(',').map(|w| w.to_lowercase().to_string())
+                .any(|word| {
+                    let mut has_word = false;
+                    for phrases in song._lyrics.clone() {
+                        let cleaned = string_clean(phrases);
 
-        let artist_match = match &self.artist {
-            Some(artist) => &song._track_artist == artist,
-            None => true,
-        };
+                        if cleaned.contains(&word) {
+                            has_word = true;
+                        }
+                    }
 
-        let album_match = match &self.album {
-            Some(album) => &song._album_title == album,
-            None => true,
-        };
+                    has_word
+                })
+        }));
 
-        let week_match = match &self.week {
-            true => {
-                let (sat, fri) = get_start_end_week_dates();
-                let (yearless_sat, yearless_fri) = (
-                    NaiveDate::from_ymd_opt(0, sat.month(), sat.day()).unwrap(),
-                    NaiveDate::from_ymd_opt(0, fri.month(), fri.day()).unwrap(),
-                );
-                let yearless_date = parse_string_to_yearless_date(&song.recording_date);
-                let datecheck = yearless_date.ge(&yearless_sat) && yearless_date.le(&yearless_fri);
+        // Matching by release params
+        matches.push(self.year.map_or(true, |year| dt.year() == year));
+        matches.push(self.month.map_or(true, |month| dt.month() == month));
+        matches.push(self.day.map_or(true, |day| dt.day() == day));
 
-                datecheck
-            },
-            false => true
-        };
+        // Matching by Track info
+        matches.push(self.artist.as_ref().map_or(true, |artist| &song._track_artist == artist));
+        matches.push(self.album.as_ref().map_or(true, |album| &song._album_title == album));
+        matches.push(self.track.as_ref().map_or(true, |track| &song._track_number == track));
 
-        year_match && month_match && week_match
-            && artist_match && album_match && genre_match && mood_match
+        // Matching by Decade
+        matches.push(self.decade.map_or(true, |decade| {
+            let year = dt.year();
+            let decade_year = (year / 10) * 10;
+
+            decade_year == decade as i32
+        }));
+
+        // Matching by Current Week
+        if self.week {
+            let (sat, fri) = get_start_end_week_dates();
+            let (yearless_sat, yearless_fri) = (
+                NaiveDate::from_ymd_opt(0, sat.month(), sat.day()).unwrap(),
+                NaiveDate::from_ymd_opt(0, fri.month(), fri.day()).unwrap(),
+            );
+            let yearless_date = parse_string_to_yearless_date(&song.recording_date);
+            let datecheck = yearless_date.ge(&yearless_sat) && yearless_date.le(&yearless_fri);
+
+            matches.push(datecheck)
+        }
+
+        matches.iter().all(|&check| check)
     }
 }
 
@@ -144,6 +165,25 @@ pub struct SongDataCache {
 }
 
 const CACHE_FILE_NAME: &str = "songs_cache.json";
+
+pub fn string_clean(str: String) -> String {
+    str.to_lowercase()
+}
+
+pub fn phrases_to_words(phrases: String) -> Vec<String> {
+    let conjunctions = [
+        "and", "but", "or", "nor", "for", "so", "yet", "because", "although",
+        "though", "even though", "while", "if", "unless", "until", "after", "before",
+        "since", "when", "whenever", "where", "wherever", "whether", "as", "than",
+        "that", "whether", "now"
+    ];
+
+    string_clean(phrases)
+        .split_whitespace()
+        .filter(|w| !conjunctions.contains(w) && w.len() > 4)
+        .map(|s| s.trim_matches(|c: char| !c.is_ascii_alphabetic()).to_string())
+        .collect()
+}
 
 pub fn get_songs() -> Result<Vec<SongData>, Box<dyn Error>> {
     let music_dir = dirs::audio_dir().unwrap();
@@ -270,7 +310,7 @@ fn load_song_tag (filename: &String) -> SongData {
     let length = get_tag(tag, &ItemKey::Length);
     let license = get_tag(tag, &ItemKey::License);
     let lyricist = get_tag(tag, &ItemKey::Lyricist).split(',').map(|s| s.to_string()).collect();
-    let lyrics = get_tag(tag, &ItemKey::Lyrics);
+    let lyrics = get_tag(tag, &ItemKey::Lyrics).split("\n\n").map(|s| s.to_string()).collect();
     let mix_dj = get_tag(tag, &ItemKey::MixDj).split(',').map(|s| s.to_string()).collect();
     let mix_engineer = get_tag(tag, &ItemKey::MixEngineer).split(',').map(|s| s.to_string()).collect();
     let mood: Vec<String>= get_tag(tag, &ItemKey::Mood).split(',').map(|s| s.to_string()).collect();
@@ -292,6 +332,8 @@ fn load_song_tag (filename: &String) -> SongData {
     let track_total = get_tag(tag, &ItemKey::TrackTotal);
     let work = get_tag(tag, &ItemKey::Work);
     let writer = get_tag(tag, &ItemKey::Writer).split(',').map(|s| s.to_string()).collect();
+
+    println!("{}", track_number);
 
     SongData {
         _album_artist: album_artist,
