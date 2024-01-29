@@ -1,13 +1,13 @@
 use chrono::Datelike;
 use clap::{Args, Subcommand};
-use prettytable::{Table, row, format, Row};
 use core::fmt;
-use std::{error::Error, collections::HashMap};
+use prettytable::{format, row, Row, Table};
+use std::{collections::HashMap, error::Error};
 
 use crate::utils::{
-    songs::{SongData, get_albums, SongDataFilter, get_songs, phrases_to_words}, 
-    date::parse_string_to_datetime, 
-    data::{array_truncate, hashmap_to_vec_truple}
+    data::{array_truncate, hashmap_to_vec_truple},
+    date::parse_string_to_datetime,
+    songs::{get_albums, get_songs, phrases_to_words, SongData, SongDataFilter},
 };
 
 #[derive(Args)]
@@ -62,19 +62,22 @@ pub fn count_music(args: CountArgs) -> Result<(), Box<dyn Error>> {
         Some(CountCommands::Genres(args)) => count_genres(args)?,
         Some(CountCommands::Moods(args)) => count_moods(args)?,
         Some(CountCommands::Words(args)) => count_words(args)?,
-        _ => count_general(args)?
+        _ => count_general(args)?,
     };
 
     Ok(())
 }
 
 pub fn count_general(args: CountArgs) -> Result<(), Box<dyn Error>> {
-    let songs: Vec<SongData> = get_songs_or_albums(args.album, SongDataFilter {
-        year: args.year,
-        month: args.month,
-        moods: args.moods,
-        ..Default::default()
-    });
+    let songs: Vec<SongData> = get_songs_or_albums(
+        args.album,
+        SongDataFilter {
+            year: args.year,
+            month: args.month,
+            moods: args.moods,
+            ..Default::default()
+        },
+    );
 
     let headers = row!["Name", "Total"];
     let mut table_rows: Vec<(&str, usize)> = vec![];
@@ -146,14 +149,17 @@ pub struct YearsArgs {
     album: bool,
 }
 
-pub fn count_years (args: YearsArgs) -> Result<(), Box<dyn Error>> {
+pub fn count_years(args: YearsArgs) -> Result<(), Box<dyn Error>> {
     let headers = get_count_headers("Years", args.album);
-    let songs: Vec<SongData> = get_songs_or_albums(args.album, SongDataFilter {
-        genre: args.genre,
-        decade: args.decade,
-        month: args.month,
-        ..Default::default()
-    });
+    let songs: Vec<SongData> = get_songs_or_albums(
+        args.album,
+        SongDataFilter {
+            genre: args.genre,
+            decade: args.decade,
+            month: args.month,
+            ..Default::default()
+        },
+    );
 
     let mut years_hash: HashMap<i32, usize> = HashMap::new();
 
@@ -195,14 +201,17 @@ pub struct GenreArgs {
     album: bool,
 }
 
-pub fn count_genres (args: GenreArgs) -> Result<(), Box<dyn Error>> {
+pub fn count_genres(args: GenreArgs) -> Result<(), Box<dyn Error>> {
     let headers = get_count_headers("Genres", args.album);
-    let songs: Vec<SongData> = get_songs_or_albums(args.album, SongDataFilter {
-        year: args.year,
-        month: args.month,
-        decade: args.decade,
-        ..Default::default()
-    });
+    let songs: Vec<SongData> = get_songs_or_albums(
+        args.album,
+        SongDataFilter {
+            year: args.year,
+            month: args.month,
+            decade: args.decade,
+            ..Default::default()
+        },
+    );
 
     let mut genre_hash: HashMap<String, i32> = HashMap::new();
 
@@ -216,7 +225,9 @@ pub fn count_genres (args: GenreArgs) -> Result<(), Box<dyn Error>> {
 
     let mut vec_genres = hashmap_to_vec_truple::<String, i32>(genre_hash);
 
-    vec_genres.sort_by(|(a_key, a_val),(b_key, b_val)| b_val.cmp(&a_val).then_with(|| a_key.cmp(&b_key)));
+    vec_genres.sort_by(|(a_key, a_val), (b_key, b_val)| {
+        b_val.cmp(&a_val).then_with(|| a_key.cmp(&b_key))
+    });
     print_table::<String, i32>(headers, vec_genres);
 
     Ok(())
@@ -249,13 +260,16 @@ pub struct WordsArgs {
     length: Option<usize>,
 }
 
-pub fn count_words (args: WordsArgs) -> Result<(), Box<dyn Error>> {
+pub fn count_words(args: WordsArgs) -> Result<(), Box<dyn Error>> {
     let headers = get_count_headers("Moods", args.album);
-    let songs: Vec<SongData> = get_songs_or_albums(args.album, SongDataFilter {
-        year: args.year,
-        month: args.month,
-        ..Default::default()
-    });
+    let songs: Vec<SongData> = get_songs_or_albums(
+        args.album,
+        SongDataFilter {
+            year: args.year,
+            month: args.month,
+            ..Default::default()
+        },
+    );
     let mut words_hash: HashMap<String, usize> = HashMap::new();
 
     for song in songs.clone() {
@@ -263,16 +277,14 @@ pub fn count_words (args: WordsArgs) -> Result<(), Box<dyn Error>> {
             let cleaned = phrases_to_words(phrases);
 
             for word in cleaned {
-                words_hash.entry(word)
-                    .and_modify(|count| *count += 1)
-                    .or_insert(1);
+                words_hash.entry(word).and_modify(|count| *count += 1).or_insert(1);
             }
         }
     }
 
     let mut vec_moods = hashmap_to_vec_truple::<String, usize>(words_hash);
 
-    vec_moods.sort_by(|(a_key, a_val),(b_key, b_val)| {
+    vec_moods.sort_by(|(a_key, a_val), (b_key, b_val)| {
         b_val.cmp(&a_val).then_with(|| a_key.cmp(&b_key))
     });
 
@@ -310,26 +322,27 @@ pub struct MoodArgs {
     length: Option<usize>,
 }
 
-pub fn count_moods (args: MoodArgs) -> Result<(), Box<dyn Error>> {
+pub fn count_moods(args: MoodArgs) -> Result<(), Box<dyn Error>> {
     let headers = get_count_headers("Moods", args.album);
-    let songs: Vec<SongData> = get_songs_or_albums(args.album, SongDataFilter {
-        year: args.year,
-        month: args.month,
-        ..Default::default()
-    });
+    let songs: Vec<SongData> = get_songs_or_albums(
+        args.album,
+        SongDataFilter {
+            year: args.year,
+            month: args.month,
+            ..Default::default()
+        },
+    );
     let mut mood_hash: HashMap<String, usize> = HashMap::new();
 
     for song in songs.clone() {
         for mood in song._mood {
-            mood_hash.entry(mood)
-                .and_modify(|count| *count += 1)
-                .or_insert(0);
+            mood_hash.entry(mood).and_modify(|count| *count += 1).or_insert(0);
         }
     }
 
     let mut vec_moods = hashmap_to_vec_truple::<String, usize>(mood_hash);
 
-    vec_moods.sort_by(|(a_key, a_val),(b_key, b_val)| {
+    vec_moods.sort_by(|(a_key, a_val), (b_key, b_val)| {
         b_val.cmp(&a_val).then_with(|| a_key.cmp(&b_key))
     });
 
@@ -366,4 +379,3 @@ fn get_count_headers(count_name: &str, album: bool) -> Row {
         false => row![count_name, "# of Songs"],
     }
 }
-

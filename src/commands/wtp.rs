@@ -2,7 +2,10 @@ use std::error::Error;
 
 use clap::Args;
 
-use crate::utils::{songs::{SongData, SongDataFilter, get_albums}, date::parse_string_to_yearless_date};
+use crate::utils::{
+    date::parse_string_to_yearless_date,
+    songs::{get_albums, SongData, SongDataFilter},
+};
 
 #[derive(Args)]
 pub struct WtpArgs {
@@ -27,7 +30,7 @@ pub struct WtpArgs {
     week: bool,
 }
 
-pub fn wtpn (args: WtpArgs) -> Result<(), Box<dyn Error>> {
+pub fn wtpn(args: WtpArgs) -> Result<(), Box<dyn Error>> {
     let songs: Vec<SongData> = get_albums()?;
     let filter: SongDataFilter = SongDataFilter {
         month: args.month,
@@ -37,6 +40,7 @@ pub fn wtpn (args: WtpArgs) -> Result<(), Box<dyn Error>> {
     };
 
     let mut filtered_songs: Vec<_> = filter.filter(songs);
+    println!("{:#?}", filtered_songs);
 
     filtered_songs.sort_by(|a, b| {
         let a_yearless = parse_string_to_yearless_date(&a.recording_date);

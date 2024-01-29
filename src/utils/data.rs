@@ -7,11 +7,14 @@ pub fn array_truncate<T>(arr: &mut Vec<T>, len: Option<usize>) {
 
             arr.truncate(new_length);
         },
-        None => ()
+        None => (),
     };
 }
 
 pub fn hashmap_to_vec_truple<K, V>(data: HashMap<K, V>) -> Vec<(K, V)> {
-    data.into_iter()
-        .collect::<Vec<(K, V)>>()
+    data.into_iter().collect::<Vec<(K, V)>>()
+}
+
+pub fn string_clean(str: String) -> String {
+    str.to_lowercase()
 }

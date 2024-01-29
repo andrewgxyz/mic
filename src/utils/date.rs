@@ -1,4 +1,4 @@
-use chrono::{DateTime, Utc, NaiveDate, ParseError, Datelike, Weekday, Local};
+use chrono::{DateTime, Datelike, Local, NaiveDate, ParseError, Utc, Weekday};
 
 pub fn parse_string_to_datetime(input: &str) -> Result<DateTime<Utc>, ParseError> {
     let naive_date = NaiveDate::parse_from_str(input, "%Y-%m-%d")?;

@@ -16,9 +16,10 @@
 
 use clap::{Parser, Subcommand};
 
-mod utils;
 mod commands;
+mod utils;
 
+use crate::commands::accg::*;
 use crate::commands::count::*;
 use crate::commands::playlist::*;
 use crate::commands::time::*;
@@ -26,13 +27,13 @@ use crate::commands::wtp::*;
 
 #[derive(Parser)]
 #[command(
-    name = "mic", 
-    author = "andrewgxyz", 
+    name = "mic",
+    author = "andrewgxyz",
     about = "A general tool around manipulating local music collection."
 )]
 struct Cli {
     #[command(subcommand)]
-    pub command: Command
+    pub command: Command,
 }
 
 #[derive(Subcommand)]
@@ -49,8 +50,10 @@ enum Command {
 
     /// What records to play based on release ranges
     Wtp(WtpArgs),
-}
 
+    /// What records to play based on release ranges
+    Collage(AccgArgs),
+}
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let args = Cli::parse();
@@ -60,6 +63,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         Command::Playlist(args) => generate_playlist(args)?,
         Command::Time(args) => times_of_music(args)?,
         Command::Wtp(args) => wtpn(args)?,
+        Command::Collage(args) => accg(args)?,
     };
 
     Ok(())

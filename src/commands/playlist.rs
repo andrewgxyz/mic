@@ -4,8 +4,9 @@ use clap::Args;
 use rand::seq::SliceRandom;
 
 use crate::utils::{
-    songs::{SongData, get_songs, SongDataFilter},
-    date::parse_string_to_datetime, data::array_truncate
+    data::array_truncate,
+    date::parse_string_to_datetime,
+    songs::{get_songs, SongData, SongDataFilter},
 };
 
 #[derive(Args)]
@@ -50,10 +51,6 @@ pub struct PlaylistArgs {
     #[clap(short = 't', long = "track")]
     track: Option<String>,
 
-    /// Randomize order of list
-    #[clap(short = 'r', long = "random")]
-    random: bool,
-
     /// Get list by current week
     #[clap(short = 'w', long = "week")]
     week: bool,
@@ -62,11 +59,19 @@ pub struct PlaylistArgs {
     #[clap(short = 'W', long = "words")]
     words: Option<String>,
 
+    /// Only Instrumental tracks
+    #[clap(short = 'i', long = "instrumental")]
+    instrumental: bool,
+
+    /// Randomize order of list
+    #[clap(short = 'r', long = "random")]
+    random: bool,
+
     /// Filename for the playlist output without extension
     name: Option<String>,
 }
 
-pub fn generate_playlist (args: PlaylistArgs) -> Result<(), Box<dyn Error>> {
+pub fn generate_playlist(args: PlaylistArgs) -> Result<(), Box<dyn Error>> {
     let songs: Vec<SongData> = get_songs()?;
     let filter: SongDataFilter = SongDataFilter {
         month: args.month,
@@ -77,6 +82,7 @@ pub fn generate_playlist (args: PlaylistArgs) -> Result<(), Box<dyn Error>> {
         decade: args.decade,
         week: args.week,
         words: args.words,
+        instrumental: args.instrumental,
         track: args.track,
         ..Default::default()
     };
@@ -87,14 +93,17 @@ pub fn generate_playlist (args: PlaylistArgs) -> Result<(), Box<dyn Error>> {
         let mut rnd = rand::thread_rng();
         filtered_songs.shuffle(&mut rnd);
     } else {
-        filtered_songs.sort_by(|a,b| {
+        filtered_songs.sort_by(|a, b| {
             let dt_a = parse_string_to_datetime(&a.recording_date).unwrap();
             let dt_b = parse_string_to_datetime(&b.recording_date).unwrap();
-            dt_a.cmp(&dt_b) 
+            dt_a.cmp(&dt_b).then_with(|| a.filename.cmp(&b.filename))
         });
     }
 
-    let mut song_files: Vec<String> = filtered_songs.iter().map(|s| s.filename.replace("/home/andrew/music/", "").to_string()).collect();
+    let mut song_files: Vec<String> = filtered_songs
+        .iter()
+        .map(|s| s.filename.replace("/home/andrew/music/", "").to_string())
+        .collect();
 
     array_truncate::<String>(&mut song_files, args.length);
 
@@ -104,14 +113,14 @@ pub fn generate_playlist (args: PlaylistArgs) -> Result<(), Box<dyn Error>> {
 
             match std::fs::write(format!("./{}.m3u", filename), &string_data) {
                 Ok(_) => println!("Playlist has been created"),
-                Err(e) => eprintln!("Something went wrong: {}", e)
+                Err(e) => eprintln!("Something went wrong: {}", e),
             };
         },
         None => {
             for song in song_files {
                 println!("{}", song);
             }
-        }
+        },
     }
 
     Ok(())
