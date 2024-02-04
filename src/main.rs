@@ -15,6 +15,8 @@
 */
 
 use clap::{Parser, Subcommand};
+use commands::info::InfoArgs;
+use commands::info::get_track_info;
 
 mod commands;
 mod utils;
@@ -53,6 +55,9 @@ enum Command {
 
     /// What records to play based on release ranges
     Collage(AccgArgs),
+
+    /// Output tag information from filename
+    Info(InfoArgs),
 }
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -64,6 +69,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         Command::Time(args) => times_of_music(args)?,
         Command::Wtp(args) => wtpn(args)?,
         Command::Collage(args) => accg(args)?,
+        Command::Info(args) => get_track_info(args)?,
     };
 
     Ok(())
