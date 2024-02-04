@@ -40,7 +40,6 @@ pub fn wtpn(args: WtpArgs) -> Result<(), Box<dyn Error>> {
     };
 
     let mut filtered_songs: Vec<_> = filter.filter(songs);
-    println!("{:#?}", filtered_songs);
 
     filtered_songs.sort_by(|a, b| {
         let a_yearless = parse_string_to_yearless_date(&a.recording_date);
