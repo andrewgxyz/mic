@@ -1,14 +1,12 @@
 use std::{
     collections::hash_map::Entry,
     error::Error,
-    sync::{Arc, Mutex},
 };
 
 use chrono::Datelike;
 use dirs;
 use glob::{glob_with, MatchOptions};
 use lofty::{AudioFile, ItemKey, Probe, Tag, TaggedFileExt};
-use rayon::iter::{IntoParallelRefIterator, ParallelIterator};
 use serde::{Deserialize, Serialize};
 
 use super::{
@@ -200,24 +198,22 @@ pub fn songs_list(music_pattern: String) -> Result<Vec<SongData>, Box<dyn Error>
             require_literal_leading_dot: false,
         },
     )?;
-    let cache_file = Arc::new(Mutex::new(load_cache_file::<SongData>(CACHE_FILE_NAME)?));
+    let mut cache_file = load_cache_file::<SongData>(CACHE_FILE_NAME)?;
     let paths: Vec<_> = globs.filter_map(|entry| entry.ok()).collect();
 
-    paths.par_iter().for_each(|path| {
+    for path in paths {
         let filename = path.display().to_string();
-        let cache_file_ref = Arc::clone(&cache_file);
-        let mut cache_file_ref = cache_file_ref.lock().unwrap();
 
-        match cache_file_ref.data.entry(filename.clone()) {
+        match cache_file.data.entry(filename.clone()) {
             Entry::Occupied(o) => o.into_mut(),
             Entry::Vacant(v) => v.insert(load_song_tag(&filename)),
         };
-    });
+    }
 
-    save_cache_file::<SongData>(&cache_file.lock().unwrap(), CACHE_FILE_NAME)?;
+    save_cache_file::<SongData>(&cache_file, CACHE_FILE_NAME)?;
 
     let map_to_vec: Vec<SongData> = {
-        let cache_file_ref = cache_file.lock().unwrap();
+        let cache_file_ref = cache_file;
         cache_file_ref.data.values().cloned().collect()
     };
 

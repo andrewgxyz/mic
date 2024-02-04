@@ -13,7 +13,8 @@ use super::{
     cache::{load_cache_file, save_cache_file},
     date::parse_string_to_datetime,
     songs::{get_albums, SongData},
-    filters::{contains_list_of_strings, equals_same_value, match_decade, match_current_week, match_no_lyrics, match_lyrics_contain_words}
+    filters::{contains_list_of_strings, equals_same_value, match_decade, match_current_week, match_no_lyrics, match_lyrics_contain_words}, data::vec_u8_to_vec_point,
+    kmeans::k_means
 };
 
 use rayon::prelude::*;
@@ -30,6 +31,7 @@ pub struct ImageCache {
     pub width: u32,
     pub height: u32,
     pub pixels: Vec<u8>,
+    pub dominant_colors: Vec<(u8, u8, u8)>
 }
 
 #[derive(Default)]
@@ -97,8 +99,11 @@ impl From<DynamicImage> for ImageCache {
         let resize = img.resize_exact(480, 480, image::imageops::FilterType::Triangle);
         let (width, height) = resize.dimensions();
         let pixels = resize.to_rgb8().into_raw();
+        let points = vec_u8_to_vec_point(pixels.clone(), width);
+        let clusters = k_means(points, 5, 10);
+        let dominant_colors: Vec<(u8,u8,u8)> = clusters.iter().map(|cluster| cluster.centroid.color).collect();
 
-        ImageCache { width, height, pixels }
+        ImageCache { width, height, pixels, dominant_colors }
     }
 }
 const CACHE_FILE_NAME: &str = "cover_cache.json";

@@ -1,4 +1,4 @@
-use std::error::Error;
+use std::{error::Error, cmp::Ordering};
 
 use clap::Args;
 use image::ImageBuffer;
@@ -61,9 +61,6 @@ fn create_collage(images: Vec<AlbumCoverData>) -> Result<image::DynamicImage, Bo
     let center_origin = cols as u32 * size as u32;
     let mut collage = image::DynamicImage::new_rgb8(center_origin, MAX_HEIGHT);
 
-    println!("{}x{}", cols, rows);
-    println!("{}x{}", size, size);
-
     for y in 0..rows {
         for x in 0..cols {
             let index = x + (cols * y);
@@ -72,6 +69,7 @@ fn create_collage(images: Vec<AlbumCoverData>) -> Result<image::DynamicImage, Bo
             }
 
             let img = images[index].clone();
+
             let pos_x: i64 = size as i64 * x as i64;
             let pos_y: i64 = size as i64 * y as i64;
             let gen_img = image::DynamicImage::ImageRgb8(
@@ -99,7 +97,15 @@ pub fn accg(args: AccgArgs) -> Result<(), Box<dyn Error>> {
     };
 
     let mut filtered = filter.filter(covers);
-    filtered.sort_by(|a, b| a.album_data._album_artist.cmp(&b.album_data._album_artist));
+    // filtered.sort_by(|a, b| a.album_data._album_artist.cmp(&b.album_data._album_artist));
+
+    filtered.sort_by(|a, b| {
+        let sum_rgb = |color: &(u8, u8, u8)| color.0 as u32 + color.1 as u32 + color.2 as u32;
+        let sum_a: u32 = a.image.dominant_colors.iter().map(|color| sum_rgb(color)).sum();
+        let sum_b: u32 = b.image.dominant_colors.iter().map(|color| sum_rgb(color)).sum();
+
+        sum_a.cmp(&sum_b)
+    });
 
     let collage = create_collage(filtered)?;
 
