@@ -41,10 +41,10 @@ pub fn times_of_music(args: TimeArgs) -> Result<(), Box<dyn Error>> {
     let track_times: Vec<u64> = filtered_songs
         .iter()
         .map(|s| {
-            let length = album_lengths.entry(s._album_title.clone()).or_insert(0);
-            *length += s._track_length;
+            let length = album_lengths.entry(s.album_title.clone()).or_insert(0);
+            *length += s.track_length;
 
-            s._track_length
+            s.track_length
         })
         .collect();
     let hash_values = album_lengths.values().cloned();

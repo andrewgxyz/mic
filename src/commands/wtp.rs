@@ -48,7 +48,7 @@ pub fn wtpn(args: WtpArgs) -> Result<(), Box<dyn Error>> {
     });
 
     for song in filtered_songs {
-        println!("{} {} - {}", song.recording_date, song._track_artist, song._album_title);
+        println!("{} {} - {}", song.recording_date, song.track_artist, song.album_title);
     }
 
     Ok(())

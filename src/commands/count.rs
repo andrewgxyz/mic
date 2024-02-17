@@ -88,21 +88,21 @@ pub fn count_general(args: CountArgs) -> Result<(), Box<dyn Error>> {
     let mut moods: Vec<String> = vec![];
 
     for song in songs.clone() {
-        if !albums.contains(&song._album_title) {
-            albums.push(song._album_title);
+        if !albums.contains(&song.album_title) {
+            albums.push(song.album_title);
         }
 
-        if !artists.contains(&song._track_artist) {
-            artists.push(song._track_artist);
+        if !artists.contains(&song.track_artist) {
+            artists.push(song.track_artist);
         }
 
-        for genre in song._genre {
+        for genre in song.genre {
             if !genres.contains(&genre) {
                 genres.push(genre);
             }
         }
 
-        for mood in song._mood {
+        for mood in song.mood {
             if !moods.contains(&mood) {
                 moods.push(mood);
             }
@@ -216,7 +216,7 @@ pub fn count_genres(args: GenreArgs) -> Result<(), Box<dyn Error>> {
     let mut genre_hash: HashMap<String, i32> = HashMap::new();
 
     for song in songs.clone() {
-        for genre in song._genre {
+        for genre in song.genre {
             let count = genre_hash.entry(genre).or_insert(0);
 
             *count += 1;
@@ -273,7 +273,7 @@ pub fn count_words(args: WordsArgs) -> Result<(), Box<dyn Error>> {
     let mut words_hash: HashMap<String, usize> = HashMap::new();
 
     for song in songs.clone() {
-        for phrases in song._lyrics {
+        for phrases in song.lyrics {
             let cleaned = phrases_to_words(phrases);
 
             for word in cleaned {
@@ -335,7 +335,7 @@ pub fn count_moods(args: MoodArgs) -> Result<(), Box<dyn Error>> {
     let mut mood_hash: HashMap<String, usize> = HashMap::new();
 
     for song in songs.clone() {
-        for mood in song._mood {
+        for mood in song.mood {
             mood_hash.entry(mood).and_modify(|count| *count += 1).or_insert(0);
         }
     }
