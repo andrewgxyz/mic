@@ -1,5 +1,6 @@
-use std::{error::Error, cmp::Ordering};
+use std::error::Error;
 
+use chrono::Local;
 use clap::Args;
 use image::ImageBuffer;
 
@@ -83,8 +84,35 @@ fn create_collage(images: Vec<AlbumCoverData>) -> Result<image::DynamicImage, Bo
     Ok(collage)
 }
 
+fn generate_collage_name(args: &AccgArgs) -> String {
+    let mut subject = "all";
+
+    if args.genre.is_some() {
+        subject = "genre";
+    } else if args.week {
+        subject = "week"
+    } else if args.moods.is_some() {
+        subject = "moods"
+    } else if args.artist.is_some() {
+        subject = "artist"
+    } else if args.year.is_some() {
+        subject = "year"
+    } else if args.month.is_some() {
+        subject = "month"
+    } else if args.day.is_some() {
+        subject = "day"
+    } else if args.decade.is_some() {
+        subject = "decade"
+    }
+
+    format!("{}", subject)
+}
+
 pub fn accg(args: AccgArgs) -> Result<(), Box<dyn Error>> {
+    let collage_type = generate_collage_name(&args);
+    let filename = format!("{}-{}.png", Local::now().format("%Y%m%d%H%M%S"), collage_type);
     let covers = get_album_covers()?;
+
     let filter = AlbumCoverDataFilter {
         month: args.month,
         year: args.year,
@@ -108,8 +136,11 @@ pub fn accg(args: AccgArgs) -> Result<(), Box<dyn Error>> {
     });
 
     let collage = create_collage(filtered)?;
+    let save_filename = format!("/home/andrew/picx/accg/{}", filename);
 
-    collage.save("merged_img.png").expect("Failed to save new image");
+    collage.save(&save_filename).expect("Failed to save new image");
+
+    println!("{}", save_filename);
 
     Ok(())
 }
