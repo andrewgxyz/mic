@@ -62,11 +62,11 @@ impl AlbumCoverDataFilter {
         let mut matches: Vec<bool> = vec![];
 
         // Matching Genres & Moods
-        matches.push(contains_list_of_strings(&self.genre, &cover.album_data._genre));
-        matches.push(contains_list_of_strings(&self.moods, &cover.album_data._mood));
+        matches.push(contains_list_of_strings(&self.genre, &cover.album_data.genre));
+        matches.push(contains_list_of_strings(&self.moods, &cover.album_data.mood));
 
         // Matching Genres
-        matches.push(match_lyrics_contain_words(&self.words, &cover.album_data._lyrics));
+        matches.push(match_lyrics_contain_words(&self.words, &cover.album_data.lyrics));
 
         // Matching by release params
         matches.push(equals_same_value::<i32>(&self.year, &dt.year()));
@@ -76,9 +76,9 @@ impl AlbumCoverDataFilter {
         matches.push(match_decade(dt, &self.decade));
 
         // Matching by Track info
-        matches.push(equals_same_value::<String>(&self.artist, &cover.album_data._track_artist));
-        matches.push(equals_same_value::<String>(&self.album, &cover.album_data._album_title));
-        matches.push(equals_same_value::<String>(&self.track, &cover.album_data._track_number));
+        matches.push(equals_same_value::<String>(&self.artist, &cover.album_data.track_artist));
+        matches.push(equals_same_value::<String>(&self.album, &cover.album_data.album_title));
+        matches.push(equals_same_value::<String>(&self.track, &cover.album_data.track_number));
 
 
         // Matching by Current Week
@@ -86,8 +86,8 @@ impl AlbumCoverDataFilter {
             matches.push(match_current_week(&cover.album_data.recording_date))
         }
 
-        if self.instrumental && cover.album_data._lyrics.len() == 0 {
-            matches.push(match_no_lyrics(&cover.album_data._lyrics));
+        if self.instrumental && cover.album_data.lyrics.len() == 0 {
+            matches.push(match_no_lyrics(&cover.album_data.lyrics));
         }
 
         matches.iter().all(|&check| check)

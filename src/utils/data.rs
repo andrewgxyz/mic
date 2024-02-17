@@ -21,6 +21,10 @@ pub fn string_clean(str: String) -> String {
     str.to_lowercase()
 }
 
+pub fn string_to_vec(data: String, pattern: &str) -> Vec<String> {
+    data.split(pattern).filter(|d| !d.is_empty()).map(|d| d.to_string()).collect()
+}
+
 pub fn vec_u8_to_vec_point(pixels: Vec<u8>, width: u32) -> Vec<Point> {
     pixels.chunks_exact(3)
         .enumerate()
