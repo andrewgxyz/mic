@@ -138,7 +138,6 @@ fn load_covers(pattern: String) -> Result<Vec<AlbumCoverData>, Box<dyn Error>> {
 
         match cache_file_ref.data.entry(filename.clone()) {
             Entry::Occupied(o) => {
-                // println!("Cached: {}", filename);
                 o.into_mut()
             },
             Entry::Vacant(v) => {

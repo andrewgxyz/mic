@@ -1,4 +1,7 @@
 use std::collections::HashMap;
+use std::error::Error;
+
+use regex::Regex;
 
 use super::kmeans::Point;
 
@@ -37,4 +40,16 @@ pub fn vec_u8_to_vec_point(pixels: Vec<u8>, width: u32) -> Vec<Point> {
             Point { x, y, color }
         })
         .collect()
+}
+
+pub fn validate_img_filename(name: &str) -> Result<bool, Box<dyn Error>> {
+    let file_extensions = vec!["png", "PNG", "jpeg", "JPG", "JPEG", "jpg"];
+    let regex_str = format!("\\.({})$", file_extensions.join("|"));
+    let regex = Regex::new(&regex_str)?;
+
+    Ok(regex.is_match(name))
+}
+
+pub fn sum_rgb (color: &(u8, u8, u8)) -> u32 {
+    color.0 as u32 + color.1 as u32 + color.2 as u32
 }

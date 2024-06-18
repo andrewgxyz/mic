@@ -1,10 +1,14 @@
+use core::panic;
 use std::error::Error;
 
 use chrono::Local;
 use clap::Args;
 use image::ImageBuffer;
 
-use crate::utils::covers::{get_album_covers, AlbumCoverData, AlbumCoverDataFilter};
+use crate::utils::{
+    covers::{get_album_covers, AlbumCoverData, AlbumCoverDataFilter},
+    data::{validate_img_filename, sum_rgb}
+};
 
 #[derive(Args)]
 pub struct AccgArgs {
@@ -74,9 +78,14 @@ fn create_collage(images: Vec<AlbumCoverData>) -> Result<image::DynamicImage, Bo
             let pos_x: i64 = size as i64 * x as i64;
             let pos_y: i64 = size as i64 * y as i64;
             let gen_img = image::DynamicImage::ImageRgb8(
-                ImageBuffer::from_vec(img.image.width, img.image.width, img.image.pixels).unwrap(),
+                ImageBuffer::from_vec(
+                    img.image.width, 
+                    img.image.width, 
+                    img.image.pixels
+                ).unwrap(),
             )
             .resize(size, size, image::imageops::FilterType::Triangle);
+
             image::imageops::overlay(&mut collage, &gen_img, pos_x, pos_y);
         }
     }
@@ -109,8 +118,20 @@ fn generate_collage_name(args: &AccgArgs) -> String {
 }
 
 pub fn accg(args: AccgArgs) -> Result<(), Box<dyn Error>> {
-    let collage_type = generate_collage_name(&args);
-    let filename = format!("{}-{}.png", Local::now().format("%Y%m%d%H%M%S"), collage_type);
+    let filename = match args.name {
+        Some(name) => {
+            if !validate_img_filename(&name)? {
+                panic!("Invalid filename")
+            }
+
+            name
+        },
+        None => {
+            let collage_type = generate_collage_name(&args);
+            let filename = format!("{}-{}.png", Local::now().format("%Y%m%d%H%M%S"), collage_type);
+            format!("/home/andrew/picx/accg/{}", filename)
+        }
+    };
     let covers = get_album_covers()?;
 
     let filter = AlbumCoverDataFilter {
@@ -128,19 +149,19 @@ pub fn accg(args: AccgArgs) -> Result<(), Box<dyn Error>> {
     // filtered.sort_by(|a, b| a.album_data._album_artist.cmp(&b.album_data._album_artist));
 
     filtered.sort_by(|a, b| {
-        let sum_rgb = |color: &(u8, u8, u8)| color.0 as u32 + color.1 as u32 + color.2 as u32;
-        let sum_a: u32 = a.image.dominant_colors.iter().map(|color| sum_rgb(color)).sum();
-        let sum_b: u32 = b.image.dominant_colors.iter().map(|color| sum_rgb(color)).sum();
+        let sum_a: u32 = a.image.dominant_colors.iter()
+            .map(|color| sum_rgb(color)).sum();
+        let sum_b: u32 = b.image.dominant_colors.iter()
+            .map(|color| sum_rgb(color)).sum();
 
         sum_a.cmp(&sum_b)
     });
 
     let collage = create_collage(filtered)?;
-    let save_filename = format!("/home/andrew/picx/accg/{}", filename);
 
-    collage.save(&save_filename).expect("Failed to save new image");
+    collage.save(&filename).expect("Failed to save new image");
 
-    println!("{}", save_filename);
+    println!("{}", filename);
 
     Ok(())
 }

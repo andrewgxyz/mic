@@ -5,7 +5,7 @@ use rand::seq::SliceRandom;
 
 use crate::utils::{
     data::array_truncate,
-    date::parse_string_to_datetime,
+    date::{parse_string_to_datetime, parse_string_to_yearless_date},
     songs::{get_songs, SongData, SongDataFilter},
 };
 
@@ -94,9 +94,9 @@ pub fn generate_playlist(args: PlaylistArgs) -> Result<(), Box<dyn Error>> {
         filtered_songs.shuffle(&mut rnd);
     } else {
         filtered_songs.sort_by(|a, b| {
-            let dt_a = parse_string_to_datetime(&a.recording_date).unwrap();
-            let dt_b = parse_string_to_datetime(&b.recording_date).unwrap();
-            dt_a.cmp(&dt_b).then_with(|| a.filename.cmp(&b.filename))
+            let a_yearless = parse_string_to_yearless_date(&a.recording_date);
+            let b_yearless = parse_string_to_yearless_date(&b.recording_date);
+            a_yearless.cmp(&b_yearless).then(a.filename.cmp(&b.filename))
         });
     }
 

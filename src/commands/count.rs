@@ -36,6 +36,10 @@ pub struct CountArgs {
     #[clap(short = 'a', long = "album")]
     album: bool,
 
+    /// Output items as list output
+    #[clap(short = 'l', long = "list")]
+    list: bool,
+
     /// Filter by Year of release
     #[clap(subcommand)]
     commands: Option<CountCommands>,
@@ -320,6 +324,10 @@ pub struct MoodArgs {
     /// Return on top numbers
     #[clap(short = 'l', long = "length")]
     length: Option<usize>,
+
+    /// Output items as list output
+    #[clap(short = 'L', long = "list")]
+    list: bool,
 }
 
 pub fn count_moods(args: MoodArgs) -> Result<(), Box<dyn Error>> {
@@ -348,7 +356,14 @@ pub fn count_moods(args: MoodArgs) -> Result<(), Box<dyn Error>> {
 
     array_truncate(&mut vec_moods, args.length);
 
-    print_table::<String, usize>(headers, vec_moods);
+    if args.list {
+        for mood in vec_moods {
+            println!("{}", mood.0)
+        }
+
+    } else {
+        print_table::<String, usize>(headers, vec_moods);
+    }
 
     Ok(())
 }

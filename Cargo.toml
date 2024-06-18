@@ -3,15 +3,19 @@ name = "mic"
 version = "0.1.0"
 edition = "2021"
 
+[package.metadata.scripts]
+main-build = "cargo build --release && cp ./target/release/mic ~/.local/bin"
+
 [dependencies]
 chrono = "0.4.31"
 clap = { version = "4.2.7", features = ["derive"] }
 dirs = "5.0.1"
 glob = "0.3.1"
 image = "0.24.8"
-lofty = "0.14.0"
+lofty = "0.20.0"
 prettytable-rs = "0.10.0"
 rand = "0.8.5"
 rayon = "1.8.1"
+regex = "1.10.3"
 serde = { version = "1.0.194", features = ["derive"] }
 serde_json = "1.0.111"

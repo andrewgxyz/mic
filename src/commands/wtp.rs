@@ -28,6 +28,10 @@ pub struct WtpArgs {
     /// Get list by current week
     #[clap(short = 'w', long = "week")]
     week: bool,
+
+    /// Get only what's left from the month, week or year
+    #[clap(short = 'l', long = "left")]
+    left: bool,
 }
 
 pub fn wtpn(args: WtpArgs) -> Result<(), Box<dyn Error>> {
@@ -36,6 +40,7 @@ pub fn wtpn(args: WtpArgs) -> Result<(), Box<dyn Error>> {
         month: args.month,
         year: args.year,
         week: args.week,
+        left: args.left,
         ..Default::default()
     };
 

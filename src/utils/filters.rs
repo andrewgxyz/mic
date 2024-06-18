@@ -23,6 +23,13 @@ pub fn match_current_week(release: &String) -> bool {
     yearless_date.ge(&yearless_sat) && yearless_date.le(&yearless_fri)
 }
 
+pub fn match_items_left(dt: &str) -> bool {
+    let yearless_dt = parse_string_to_yearless_date(dt);
+    let yearless_today = parse_string_to_yearless_date(&(chrono::offset::Local::now().to_string()));
+
+    yearless_dt >= yearless_today
+}
+
 pub fn match_decade(dt: DateTime<Utc>, decade: &Option<u16>) -> bool {
     let year = dt.year();
     let decade_year = ((year / 10) * 10) as u16;

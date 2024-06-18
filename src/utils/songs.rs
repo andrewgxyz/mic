@@ -6,7 +6,7 @@ use std::{
 use chrono::Datelike;
 use dirs;
 use glob::{glob_with, MatchOptions};
-use lofty::{AudioFile, ItemKey, Probe, Tag, TaggedFileExt};
+use lofty::{probe::Probe, tag::Tag, prelude::{AudioFile, ItemKey, TaggedFileExt}};
 use serde::{Deserialize, Serialize};
 
 use super::{
@@ -19,7 +19,7 @@ use super::{
         match_decade, 
         match_no_lyrics, 
         match_current_week, 
-        contains_list_of_strings
+        contains_list_of_strings, match_items_left
     },
 };
 
@@ -42,6 +42,7 @@ pub struct SongData {
     pub track_title: String,
     pub track_total: String,
     pub filename: String,
+    pub dir: String,
     pub recording_date: String,
 
     // Details and Comments
@@ -59,7 +60,6 @@ pub struct SongData {
     pub conductor: Vec<String>,
     pub director: Vec<String>,
     pub engineer: Vec<String>,
-    pub involved_people: Vec<String>,
     pub lyricist: Vec<String>,
     pub mix_dj: Vec<String>,
     pub mix_engineer: Vec<String>,
@@ -85,6 +85,7 @@ pub struct SongDataFilter {
     pub decade: Option<u16>,
     pub track: Option<String>,
     pub week: bool,
+    pub left: bool,
     pub instrumental: bool,
 }
 
@@ -104,7 +105,6 @@ impl SongDataFilter {
         matches.push(contains_list_of_strings(&self.moods, &song.mood));
 
         // Matching Genres
-        println!("{}", song.filename);
         matches.push(match_lyrics_contain_words(&self.words, &song.lyrics));
 
         // Matching by release params
@@ -123,6 +123,11 @@ impl SongDataFilter {
         // Matching by Current Week
         if self.week {
             matches.push(match_current_week(&song.recording_date))
+        }
+
+        // Matching by Current Week
+        if self.left {
+            matches.push(match_items_left(&song.recording_date))
         }
 
         if self.instrumental {
@@ -174,22 +179,27 @@ pub fn phrases_to_words(phrases: String) -> Vec<String> {
         .collect()
 }
 
+pub enum ListMode {
+    Songs,
+    Albums
+}
+
 pub fn get_songs() -> Result<Vec<SongData>, Box<dyn Error>> {
     let music_dir = dirs::audio_dir().unwrap();
-    let pattern = format!("{}/*/*/*[.flac,.mp3,.wav]", music_dir.to_string_lossy());
+    let pattern = format!("{}/*/*/*[.flac,.mp3,.wav,.opus]", music_dir.to_string_lossy());
 
-    Ok(songs_list(pattern)?)
+    Ok(songs_list(pattern, ListMode::Songs)?)
 }
 
 pub fn get_albums() -> Result<Vec<SongData>, Box<dyn Error>> {
     let music_dir = dirs::audio_dir().unwrap();
-    let pattern = format!("{}/*/*/*01-*[.flac,.mp3,.wav]", music_dir.to_string_lossy());
+    let pattern = format!("{}/*/*/01*[.flac,.mp3,.wav,.opus]", music_dir.to_string_lossy());
 
-    Ok(songs_list(pattern)?)
+    Ok(songs_list(pattern, ListMode::Albums)?)
 }
 
 /// Collects a list of songs by pattern
-pub fn songs_list(music_pattern: String) -> Result<Vec<SongData>, Box<dyn Error>> {
+pub fn songs_list(music_pattern: String, mode: ListMode) -> Result<Vec<SongData>, Box<dyn Error>> {
     let globs = glob_with(
         &music_pattern,
         MatchOptions {
@@ -217,7 +227,10 @@ pub fn songs_list(music_pattern: String) -> Result<Vec<SongData>, Box<dyn Error>
         cache_file_ref.data.values().cloned().collect()
     };
 
-    Ok(map_to_vec)
+    Ok(match mode {
+        ListMode::Albums => map_to_vec.iter().filter(|s| s.filename.contains("/01")).map(|s| s.clone()).collect(),
+        ListMode::Songs => map_to_vec
+    })
 }
 
 fn get_tag(tag: &Tag, key: &ItemKey) -> String {
@@ -250,7 +263,6 @@ pub fn load_song_tag(filename: &String) -> SongData {
     let director = string_to_vec(get_tag(tag, &ItemKey::Director), ",");
     let engineer = string_to_vec(get_tag(tag, &ItemKey::Engineer), ",");
     let genre: Vec<String> = string_to_vec(get_tag(tag, &ItemKey::Genre), ";");
-    let involved_people = string_to_vec(get_tag(tag, &ItemKey::InvolvedPeople), ",");
     let label = get_tag(tag, &ItemKey::Label);
     let language = get_tag(tag, &ItemKey::Language);
     let length = get_tag(tag, &ItemKey::Length);
@@ -277,6 +289,9 @@ pub fn load_song_tag(filename: &String) -> SongData {
     let track_total = get_tag(tag, &ItemKey::TrackTotal);
     let work = get_tag(tag, &ItemKey::Work);
     let writer = string_to_vec(get_tag(tag, &ItemKey::Writer), ",");
+    let mut filename_split: Vec<&str> = filename.split('/').collect();
+    filename_split.pop().unwrap();
+    let dir = filename_split.join("/");
 
     SongData {
         album_artist,
@@ -291,7 +306,6 @@ pub fn load_song_tag(filename: &String) -> SongData {
         director,
         engineer,
         genre,
-        involved_people,
         label,
         language,
         length,
@@ -319,6 +333,7 @@ pub fn load_song_tag(filename: &String) -> SongData {
         work,
         writer,
         filename: filename.clone(),
+        dir,
     }
 }
 

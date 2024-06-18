@@ -17,6 +17,8 @@
 use clap::{Parser, Subcommand};
 use commands::info::InfoArgs;
 use commands::info::get_track_info;
+use commands::missing::MissingArgs;
+use commands::missing::get_missing_tag;
 
 mod commands;
 mod utils;
@@ -53,7 +55,10 @@ enum Command {
     /// What records to play based on release ranges
     Wtp(WtpArgs),
 
-    /// What records to play based on release ranges
+    /// Find tracks that are missing a particular tag
+    Missing(MissingArgs),
+
+    /// Generates a collage of albums based on filters
     Collage(AccgArgs),
 
     /// Output tag information from filename
@@ -67,6 +72,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         Command::Count(args) => count_music(args)?,
         Command::Playlist(args) => generate_playlist(args)?,
         Command::Time(args) => times_of_music(args)?,
+        Command::Missing(args) => get_missing_tag(args)?,
         Command::Wtp(args) => wtpn(args)?,
         Command::Collage(args) => accg(args)?,
         Command::Info(args) => get_track_info(args)?,
