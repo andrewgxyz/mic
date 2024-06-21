@@ -2,7 +2,7 @@ use clap::Args;
 use prettytable::{format, row, Table};
 use std::{collections::HashMap, error::Error};
 
-use crate::utils::songs::{get_songs, SongDataFilter};
+use crate::utils::{data::convert_sec_to_fmt_time, songs::{get_songs, SongDataFilter}};
 
 #[derive(Args)]
 pub struct TimeArgs {
@@ -76,20 +76,4 @@ pub fn times_of_music(args: TimeArgs) -> Result<(), Box<dyn Error>> {
     table.printstd();
 
     Ok(())
-}
-
-fn convert_sec_to_fmt_time(sec: u64) -> String {
-    let hrs: i32 = (sec / 3600) as i32;
-    let mut min: i32 = (sec / 60) as i32;
-
-    if hrs > 0 {
-        min = (sec as i32 - (hrs * 3600)) / 60;
-        if hrs > 9 {
-            return format!("{:03.0}:{:02.0}:{:02.0}", hrs, min, sec % 60);
-        }
-
-        return format!("{:02.0}:{:02.0}:{:02.0}", hrs, min, sec % 60);
-    }
-
-    format!("{:02.0}:{:02.0}", min, sec % 60)
 }

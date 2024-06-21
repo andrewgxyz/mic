@@ -4,7 +4,7 @@ use clap::Args;
 use prettytable::{format, row, Table};
 use serde_json::Value;
 
-use crate::utils::{songs::{load_song_tag, get_songs, SongData}, data::string_to_vec};
+use crate::utils::{data::string_to_vec, songs::load_song_tag};
 
 #[derive(Args)]
 pub struct InfoArgs {
@@ -25,60 +25,6 @@ fn is_tag_excluded(tagname: String, excludes: &Vec<String>) -> bool {
 }
 
 pub fn get_track_info(args: InfoArgs) -> Result<(), Box<dyn Error>> {
-    // let songs = get_songs()?;
-
-    // let check: Vec<_> = songs.iter().filter(|s| {
-    //     let key = args.name.as_str();
-    //     match key {
-    //         "album_artist" => s.album_artist.is_empty(),
-    //         "album_title" => s.album_title.is_empty(),
-    //         "arranger" => s.arranger.is_empty(),
-    //         "catalog_number" => s.catalog_number.is_empty(),
-    //         "comment" => s.comment.is_empty(),
-    //         "composer" => s.composer.is_empty(),
-    //         "conductor" => s.conductor.is_empty(),
-    //         "copyright_message" => s.copyright_message.is_empty(),
-    //         "description" => s.description.is_empty(),
-    //         "director" => s.director.is_empty(),
-    //         "engineer" => s.engineer.is_empty(),
-    //         "genre" => {
-    //             println!("{}", s.genre.is_empty());
-    //             s.genre.is_empty()
-    //         },
-    //         "involved_people" => s.involved_people.is_empty(),
-    //         "label" => s.label.is_empty(),
-    //         "language" => s.language.is_empty(),
-    //         "length" => s.length.is_empty(),
-    //         "license" => s.license.is_empty(),
-    //         "lyricist" => s.lyricist.is_empty(),
-    //         "lyrics" => s.lyrics.is_empty(),
-    //         "mix_dj" => s.mix_dj.is_empty(),
-    //         "mix_engineer" => s.mix_engineer.is_empty(),
-    //         "mood" => s.mood.is_empty(),
-    //         "movement" => s.movement.is_empty(),
-    //         "movement_number" => s.movement_number.is_empty(),
-    //         "movement_total" => s.movement_total.is_empty(),
-    //         "musician_credits" => s.musician_credits.is_empty(),
-    //         "parental_advisory" => s.parental_advisory.is_empty(),
-    //         "performer" => s.performer.is_empty(),
-    //         "producer" => s.producer.is_empty(),
-    //         "publisher" => s.publisher.is_empty(),
-    //         "recording_date" => s.recording_date.is_empty(),
-    //         "remixer" => s.remixer.is_empty(),
-    //         "script" => s.script.is_empty(),
-    //         "track_length" => s.track_length < 1,
-    //         "track_artist" => s.track_artist.is_empty(),
-    //         "track_number" => s.track_number.is_empty(),
-    //         "track_title" => s.track_title.is_empty(),
-    //         "track_total" => s.track_total.is_empty(),
-    //         "work" => s.work.is_empty(),
-    //         "writer" => s.writer.is_empty(),
-    //         _ => true
-    //     }
-    // }).collect();
-
-    // println!("{:?}", check);
-
     let song_tag = load_song_tag(&args.name);
 
     let headers = row!["Tag", "Value"];

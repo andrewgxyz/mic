@@ -117,6 +117,24 @@ fn generate_collage_name(args: &AccgArgs) -> String {
     format!("{}", subject)
 }
 
+fn generate_filename(args: &AccgArgs) -> Result<String, Box<dyn Error>> {
+    let filename: String;
+
+    let collage_type = generate_collage_name(&args);
+    if args.genre.is_some() {
+        filename = format!("{}.png", args.genre.as_ref().unwrap().replace([',', ' '], "-").to_lowercase())
+    } else if args.moods.is_some() {
+        filename = format!("{}.png", args.moods.as_ref().unwrap().replace([',', ' '], "-").to_lowercase())
+    } else if args.artist.is_some() {
+        filename = format!("{}.png", args.artist.as_ref().unwrap().replace([',', ' '], "-").to_lowercase())
+    } else {
+        filename = format!("{}-{}.png", Local::now().format("%Y%m%d%H%M%S"), collage_type)
+
+    }
+
+    Ok(filename)
+}
+
 pub fn accg(args: AccgArgs) -> Result<(), Box<dyn Error>> {
     let filename = match args.name {
         Some(name) => {
@@ -127,8 +145,7 @@ pub fn accg(args: AccgArgs) -> Result<(), Box<dyn Error>> {
             name
         },
         None => {
-            let collage_type = generate_collage_name(&args);
-            let filename = format!("{}-{}.png", Local::now().format("%Y%m%d%H%M%S"), collage_type);
+            let filename = generate_filename(&args)?;
             format!("/home/andrew/picx/accg/{}", filename)
         }
     };

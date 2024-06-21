@@ -43,6 +43,7 @@ pub struct SongData {
     pub track_total: String,
     pub filename: String,
     pub dir: String,
+    pub release_date: String,
     pub recording_date: String,
 
     // Details and Comments
@@ -280,6 +281,7 @@ pub fn load_song_tag(filename: &String) -> SongData {
     let performer = string_to_vec(get_tag(tag, &ItemKey::Performer), ",");
     let producer = string_to_vec(get_tag(tag, &ItemKey::Producer), ",");
     let publisher = get_tag(tag, &ItemKey::Publisher);
+    let release_date = get_tag(tag, &ItemKey::OriginalReleaseDate);
     let recording_date = get_tag(tag, &ItemKey::RecordingDate);
     let remixer = get_tag(tag, &ItemKey::Remixer);
     let track_length = tagged_file.properties().duration().as_secs();
@@ -323,6 +325,7 @@ pub fn load_song_tag(filename: &String) -> SongData {
         performer,
         producer,
         publisher,
+        release_date,
         recording_date,
         remixer,
         track_length,
@@ -344,7 +347,7 @@ mod tests {
     #[test]
     fn can_load_tag() {
         let tag =
-            load_song_tag(&"/home/andrew/music/adam-lambert/velvet/01-velvet.flac".to_string());
+            load_song_tag(&"/home/andrew/music/adam-lambert/velvet/01-velvet.opus".to_string());
 
         assert_eq!(tag.track_artist, "Adam Lambert");
     }

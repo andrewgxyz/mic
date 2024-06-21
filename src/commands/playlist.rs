@@ -5,7 +5,7 @@ use rand::seq::SliceRandom;
 
 use crate::utils::{
     data::array_truncate,
-    date::{parse_string_to_datetime, parse_string_to_yearless_date},
+    date::parse_string_to_yearless_date,
     songs::{get_songs, SongData, SongDataFilter},
 };
 

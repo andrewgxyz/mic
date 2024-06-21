@@ -53,3 +53,19 @@ pub fn validate_img_filename(name: &str) -> Result<bool, Box<dyn Error>> {
 pub fn sum_rgb (color: &(u8, u8, u8)) -> u32 {
     color.0 as u32 + color.1 as u32 + color.2 as u32
 }
+
+pub fn convert_sec_to_fmt_time(sec: u64) -> String {
+    let hrs: i32 = (sec / 3600) as i32;
+    let mut min: i32 = (sec / 60) as i32;
+
+    if hrs > 0 {
+        min = (sec as i32 - (hrs * 3600)) / 60;
+        if hrs > 9 {
+            return format!("{:03.0}:{:02.0}:{:02.0}", hrs, min, sec % 60);
+        }
+
+        return format!("{:02.0}:{:02.0}:{:02.0}", hrs, min, sec % 60);
+    }
+
+    format!("{:02.0}:{:02.0}", min, sec % 60)
+}
