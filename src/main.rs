@@ -39,6 +39,7 @@ struct Cli {
 }
 
 #[derive(Subcommand)]
+#[command(arg_required_else_help = true)]
 enum Command {
     /// Count number of songs by group
     #[command(arg_required_else_help = false)]
