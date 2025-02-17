@@ -155,6 +155,10 @@ fn load_covers(pattern: String) -> Result<Vec<AlbumCoverData>, Box<dyn Error>> {
 
                 let ic: ImageCache = ImageCache::from(img);
 
+                if song.len() == 0 {
+                    return
+                }
+
                 v.insert(AlbumCoverData {
                     image: ic,
                     album_data: song[0].clone(),

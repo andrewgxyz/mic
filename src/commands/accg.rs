@@ -44,6 +44,10 @@ pub struct AccgArgs {
     #[clap(short = 'w', long = "week")]
     week: bool,
 
+    /// Where it outputs the image
+    #[clap(short = 'f', long = "folder")]
+    folder: Option<String>,
+
     /// Filename for the playlist output without extension
     name: Option<String>,
 }
@@ -129,14 +133,14 @@ fn generate_filename(args: &AccgArgs) -> Result<String, Box<dyn Error>> {
         filename = format!("{}.png", args.artist.as_ref().unwrap().replace([',', ' '], "-").to_lowercase())
     } else {
         filename = format!("{}-{}.png", Local::now().format("%Y%m%d%H%M%S"), collage_type)
-
     }
 
     Ok(filename)
 }
 
 pub fn accg(args: AccgArgs) -> Result<(), Box<dyn Error>> {
-    let filename = match args.name {
+    let name = generate_filename(&args)?;
+    let mut filename = match args.name {
         Some(name) => {
             if !validate_img_filename(&name)? {
                 panic!("Invalid filename")
@@ -147,6 +151,15 @@ pub fn accg(args: AccgArgs) -> Result<(), Box<dyn Error>> {
         None => {
             let filename = generate_filename(&args)?;
             format!("/home/andrew/picx/accg/{}", filename)
+        }
+    };
+
+    filename = match args.folder {
+        Some(dir) => {
+            format!("{}/{}", dir, name)
+        },
+        None => {
+            format!("/home/andrew/picx/accg/{}", name)
         }
     };
     let covers = get_album_covers()?;
