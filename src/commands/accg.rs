@@ -1,5 +1,5 @@
 use core::panic;
-use std::error::Error;
+use std::{error::Error, fs::OpenOptions, io::BufRead};
 
 use chrono::Local;
 use clap::Args;
@@ -47,6 +47,10 @@ pub struct AccgArgs {
     /// Where it outputs the image
     #[clap(short = 'f', long = "folder")]
     folder: Option<String>,
+
+    /// File path for playlist file e.i. m3u
+    #[clap(short = 'p', long = "playlist")]
+    playlist: Option<String>,
 
     /// Filename for the playlist output without extension
     name: Option<String>,
@@ -116,6 +120,8 @@ fn generate_collage_name(args: &AccgArgs) -> String {
         subject = "day"
     } else if args.decade.is_some() {
         subject = "decade"
+    } else if args.playlist.is_some() {
+        subject = "playlist"
     }
 
     format!("{}", subject)
@@ -163,6 +169,17 @@ pub fn accg(args: AccgArgs) -> Result<(), Box<dyn Error>> {
         }
     };
     let covers = get_album_covers()?;
+    let mut playlist: Vec<String> = vec![];
+
+
+    if args.playlist.is_some() {
+        let playlist_file = OpenOptions::new().read(true).open(args.playlist.unwrap())?;
+        let reader = std::io::BufReader::new(playlist_file);
+
+        for line in reader.lines() {
+            playlist.push(line?);
+        }
+    }
 
     let filter = AlbumCoverDataFilter {
         month: args.month,

@@ -15,8 +15,6 @@
 */
 
 use clap::{Parser, Subcommand};
-use commands::info::InfoArgs;
-use commands::info::get_track_info;
 
 mod commands;
 mod utils;
@@ -26,6 +24,8 @@ use crate::commands::count::*;
 use crate::commands::playlist::*;
 use crate::commands::time::*;
 use crate::commands::wtp::*;
+use crate::commands::info::*;
+use crate::commands::lyrics::*;
 
 #[derive(Parser)]
 #[command(
@@ -59,6 +59,9 @@ enum Command {
 
     /// Output tag information from filename
     Info(InfoArgs),
+
+    /// Output tag information from filename
+    Lyrics(LyricsArgs),
 }
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -71,6 +74,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         Command::Wtp(args) => wtpn(args)?,
         Command::Collage(args) => accg(args)?,
         Command::Info(args) => get_track_info(args)?,
+        Command::Lyrics(args) => get_track_lyrics(args)?,
     };
 
     Ok(())
