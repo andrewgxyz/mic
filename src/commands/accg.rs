@@ -169,15 +169,28 @@ pub fn accg(args: AccgArgs) -> Result<(), Box<dyn Error>> {
         }
     };
     let covers = get_album_covers()?;
-    let mut playlist: Vec<String> = vec![];
-
+    let mut unique_filenames: Vec<String> = vec![];
 
     if args.playlist.is_some() {
+        let mut playlist: Vec<String> = vec![];
         let playlist_file = OpenOptions::new().read(true).open(args.playlist.unwrap())?;
         let reader = std::io::BufReader::new(playlist_file);
+        let music_dir = dirs::audio_dir().unwrap();
 
         for line in reader.lines() {
-            playlist.push(line?);
+            let filename = line.unwrap();
+            let mut fixed: Vec<&str> = filename.split('/').collect();
+            fixed.pop().unwrap();
+            fixed.push("cover.jpg");
+            let full_track_path = fixed.join("/");
+            playlist.push(format!("{}/{}", music_dir.to_string_lossy(), full_track_path));
+        }
+
+
+        for track in playlist {
+            if !unique_filenames.contains(&track) {
+                unique_filenames.push(track);
+            }
         }
     }
 
@@ -189,6 +202,7 @@ pub fn accg(args: AccgArgs) -> Result<(), Box<dyn Error>> {
         artist: args.artist,
         decade: args.decade,
         week: args.week,
+        playlist: unique_filenames,
         ..Default::default()
     };
 

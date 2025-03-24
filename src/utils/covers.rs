@@ -48,6 +48,7 @@ pub struct AlbumCoverDataFilter {
     pub track: Option<String>,
     pub week: bool,
     pub instrumental: bool,
+    pub playlist: Vec<String>,
 }
 
 impl AlbumCoverDataFilter {
@@ -80,6 +81,19 @@ impl AlbumCoverDataFilter {
         matches.push(equals_same_value::<String>(&self.album, &cover.album_data.album_title));
         matches.push(equals_same_value::<String>(&self.track, &cover.album_data.track_number));
 
+        if self.playlist.iter().len() > 0 {
+            let mut is_file = false;
+
+            for track in self.playlist.iter() {
+                println!("{}, {}",track, cover.cover_name);
+                if *track == cover.cover_name {
+                    is_file = true;
+                    break;
+                }
+            }
+
+            matches.push(is_file);
+        }
 
         // Matching by Current Week
         if self.week {

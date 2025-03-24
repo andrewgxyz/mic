@@ -88,6 +88,7 @@ pub struct SongDataFilter {
     pub week: bool,
     pub left: bool,
     pub instrumental: bool,
+    pub playlist: Vec<String>,
 }
 
 impl SongDataFilter {
@@ -133,6 +134,19 @@ impl SongDataFilter {
 
         if self.instrumental {
             matches.push(match_no_lyrics(&song.lyrics));
+        }
+
+        if self.playlist.len() > 0 {
+            let mut is_file = false;
+
+            for track in self.playlist.iter() {
+                if *track == song.filename {
+                    is_file = true;
+                    break;
+                }
+            }
+
+            matches.push(is_file);
         }
 
         matches.iter().all(|&check| check)

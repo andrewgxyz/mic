@@ -1,6 +1,6 @@
 use clap::Args;
 use prettytable::{format, row, Table};
-use std::{collections::HashMap, error::Error};
+use std::{collections::HashMap, error::Error, fs::OpenOptions, io::BufRead};
 
 use crate::utils::{data::convert_sec_to_fmt_time, songs::{get_songs, SongDataFilter}};
 
@@ -18,6 +18,8 @@ pub struct TimeArgs {
     artist: Option<String>,
     #[clap(short = 'a', long = "album")]
     album: Option<String>,
+    #[clap(short = 'p', long = "playlist")]
+    playlist: Option<String>,
 }
 
 pub fn times_of_music(args: TimeArgs) -> Result<(), Box<dyn Error>> {
@@ -28,12 +30,32 @@ pub fn times_of_music(args: TimeArgs) -> Result<(), Box<dyn Error>> {
     let mut album_lengths: HashMap<String, u64> = HashMap::new();
     let max_album;
     let min_album;
+    let mut unique_filenames: Vec<String> = vec![];
+
+    if args.playlist.is_some() {
+        let mut playlist: Vec<String> = vec![];
+        let playlist_file = OpenOptions::new().read(true).open(args.playlist.unwrap())?;
+        let reader = std::io::BufReader::new(playlist_file);
+        let music_dir = dirs::audio_dir().unwrap();
+
+        for line in reader.lines() {
+            let filename = line.unwrap();
+            playlist.push(format!("{}/{}", music_dir.to_string_lossy(), filename));
+        }
+
+        for track in playlist {
+            if !unique_filenames.contains(&track) {
+                unique_filenames.push(track);
+            }
+        }
+    }
 
     let filter: SongDataFilter = SongDataFilter {
         month: args.month,
         year: args.year,
         genre: args.genre,
         artist: args.artist,
+        playlist: unique_filenames,
         ..Default::default()
     };
 
