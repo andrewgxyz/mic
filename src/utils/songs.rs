@@ -97,6 +97,7 @@ impl SongDataFilter {
     }
 
     pub fn matches(&self, song: &SongData) -> bool {
+        println!("{:?} - {:?} - {:?}", song.filename, song.release_date, song.recording_date);
         let dt = parse_string_to_datetime(&song.recording_date)
             .expect("Something went wrong with date parsing");
 

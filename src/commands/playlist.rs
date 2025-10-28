@@ -1,4 +1,4 @@
-use std::error::Error;
+use std::{error::Error, fs::OpenOptions, io::BufRead};
 
 use clap::Args;
 use rand::seq::SliceRandom;
@@ -67,12 +67,35 @@ pub struct PlaylistArgs {
     #[clap(short = 'r', long = "random")]
     random: bool,
 
+    /// Path to a playlist file (Favorites.m3u)
+    #[clap(short = 'p', long = "playlist")]
+    playlist: Option<String>,
+
     /// Filename for the playlist output without extension
     name: Option<String>,
 }
 
 pub fn generate_playlist(args: PlaylistArgs) -> Result<(), Box<dyn Error>> {
     let songs: Vec<SongData> = get_songs()?;
+    let mut unique_filenames: Vec<String> = vec![];
+
+    if args.playlist.is_some() {
+        let mut playlist: Vec<String> = vec![];
+        let playlist_file = OpenOptions::new().read(true).open(args.playlist.unwrap())?;
+        let reader = std::io::BufReader::new(playlist_file);
+        let music_dir = dirs::audio_dir().unwrap();
+
+        for line in reader.lines() {
+            let filename = line.unwrap();
+            playlist.push(format!("{}/{}", music_dir.to_string_lossy(), filename));
+        }
+
+        for track in playlist {
+            if !unique_filenames.contains(&track) {
+                unique_filenames.push(track);
+            }
+        }
+    }
     let filter: SongDataFilter = SongDataFilter {
         month: args.month,
         year: args.year,
@@ -84,6 +107,7 @@ pub fn generate_playlist(args: PlaylistArgs) -> Result<(), Box<dyn Error>> {
         words: args.words,
         instrumental: args.instrumental,
         track: args.track,
+        playlist: unique_filenames,
         ..Default::default()
     };
 

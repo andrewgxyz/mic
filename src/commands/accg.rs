@@ -56,8 +56,8 @@ pub struct AccgArgs {
     name: Option<String>,
 }
 
-const MAX_WIDTH: u32 = 3840;
-const MAX_HEIGHT: u32 = 2160;
+const MAX_WIDTH: u32 = 7680;
+const MAX_HEIGHT: u32 = 4320;
 
 fn create_collage(images: Vec<AlbumCoverData>) -> Result<image::DynamicImage, Box<dyn Error>> {
     // Get the dimensions of the first image to determine the size of the collage
